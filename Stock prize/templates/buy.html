@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+   <body>
+      <h1>Investment:</h1>
+   <form action="/stock_op" method="POST">
+    <table border = 1>
+       <thead>
+          <td>Sr. no.</td>
+          <td>Date</td>
+          <td>Symbol</td>
+          <td>Name</td>
+          <td>Quantity</td>
+          <td>Buying Price</td>
+          <td>Current Price</td>
+       </thead>
+       
+       {% for row in msg %}
+          <tr>
+             <td>{{row[0]}}</td>
+             <td>{{row[1]}}</td>
+             <td>{{row[2]}}</td>
+             <td>{{row[3]}}</td>
+             <td>{{row[4]}}</td>
+             <td>{{row[5]}}</td>
+             <td>{{row[6]}}</td>
+          </tr>
+       {% endfor %}
+    </table>
+ </form>
+   </body>
+</html>

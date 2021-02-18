@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+   <body>
+      <form action="/stock_op" method="POST">
+         <table border = 1>
+            <thead>
+               <td>Id</td>
+               <td>Name</td>
+               <td>symbols</td>
+            </thead>
+            
+            {% for row in rows %}
+               <tr>
+                  <td>{{row[0]}}</td>
+                  <td>{{row[1]}}</td>
+                  <td><input type="radio" name="sym" id="sym" value="{{row[2]}}">{{row[2]}}</td>
+               </tr>
+            {% endfor %}
+         </table>
+         <input type="submit" value="CHECK-DETAILS" name="details">
+         <input type="integer" name="quantity">
+         <input type="submit" value="BUY" name="buy">
+      </form>
+      
+      
+      <a href = "/">Go back to home page</a>
+      <a href = "/investments">Go back to investment page</a>
+      
+   </body>
+   <script>
+      function fun(){
+         alert("clicked");
+      }
+
+   </script>
+</html>
