@@ -12,7 +12,7 @@ import os
 from datetime import date
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 import pandas_datareader 
 import datetime
 import io
@@ -60,10 +60,10 @@ def details():
             change=((current_prize-bought_prize)/current_prize)*100
             
             
-            # cursor.execute("INSERT INTO investments(date, symbol,name,quantity, bought_prize,current_prize ) VALUES (?,?,?,?,?,?)",(date1,symbol,company,quantity,bought_prize,current_prize))
+            cursor.execute("INSERT INTO investments(date, symbol,name,quantity, bought_prize,current_prize ) VALUES (?,?,?,?,?,?)",(date1,symbol,company,quantity,bought_prize,current_prize))
             # cursor.execute("INSERT INTO invest(serialnumber ,date, symbol,name,quantity, bought_prize ) VALUES ('1',?,?,?,?,?)",(date1,symbol,company,quantity,bought_prize))
             # cursor.execute("UPDATE stock SET species= 'ACC.NS' WHERE id = '6'")
-            cursor.execute("DELETE FROM investments")
+            # cursor.execute("DELETE FROM investments")
             connection.commit()
             msg="record added successfully."
 
@@ -79,21 +79,26 @@ def details():
 
 @app.route('/investments')
 def invest():
-    conn = sql.connect("investments.db")
-    conn.row_factory = sql.Row
-    cur = conn.cursor()
-    cur.execute("SELECT symbol FROM investments")
-    symbols=cur.fetchall()
-    cur.execute("SELECT serialnumber FROM investments")
-    s=cur.fetchall()
-    s1=[v[0] for v in s]
-    val=tuple(round(si.get_live_price(symbol[0]),2) for symbol in symbols)
-    key=tuple(value for value in s1)
-    lst=[(k,v) for (k,v) in dict(zip(val,key)).items()]
-    cur.executemany("""UPDATE investments SET current_prize= ? WHERE serialnumber= ?""",lst)
-    cur.execute("select * from investments")
-    msg = cur.fetchall()
-    return render_template("buy.html",msg = msg)
+    try:
+        conn = sql.connect("investments.db")
+        conn.row_factory = sql.Row
+        cur = conn.cursor()
+        cur.execute("SELECT symbol FROM investments")
+        symbols=cur.fetchall()
+        cur.execute("SELECT serialnumber FROM investments")
+        s=cur.fetchall()
+        s1=[v[0] for v in s]
+        val=tuple(round(si.get_live_price(symbol[0]),2) for symbol in symbols)
+        key=tuple(value for value in s1)
+        lst=[(k,v) for (k,v) in dict(zip(key,val)).items()]
+        l=[tup[::-1] for tup in lst]
+        cur.executemany("""UPDATE investments SET current_prize= ? WHERE serialnumber= ?""",l)
+        cur.execute("select * from investments")
+        msg = cur.fetchall()
+        return render_template("buy.html",msg = msg)
+    
+    except:
+        print("error in investment")
 
 
 @app.route('/')
