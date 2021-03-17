@@ -21,6 +21,17 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas_datareader.data as web
 
+@app.route('/sell/<id>',methods=['POST'])
+def sell(id):
+    if 'sell' in request.form:
+        quantt=request.form['quantity']
+        srno=id
+        print(srno)
+        return quantt
+        
+    else:
+        return "nameerror!"
+
 @app.route('/stock_op', methods = ['POST','GET'])
 def details():
     if 'details' in request.form:
@@ -95,7 +106,22 @@ def invest():
         cur.executemany("""UPDATE investments SET current_prize= ? WHERE serialnumber= ?""",l)
         cur.execute("select * from investments")
         msg = cur.fetchall()
-        return render_template("buy.html",msg = msg)
+
+        cur.execute("SELECT quantity FROM investments")
+        q=cur.fetchall()
+        quantity=[a[0] for a in q]
+        cur.execute("SELECT bought_prize FROM investments")
+        bp=cur.fetchall()
+        bought_price=[b[0] for b in bp]
+        lst=[k*v for (k,v) in dict(zip(quantity,bought_price)).items()]
+        TI=round(sum(lst),2)
+
+        cur.execute("SELECT current_prize FROM investments")
+        cp=cur.fetchall()
+        current_price=[c[0] for c in cp]
+        lst1=[k*v for (k,v) in dict(zip(quantity,current_price)).items()]
+        CP=round(sum(lst1),2)
+        return render_template("buy.html",msg = msg,TI=TI,CP=CP)
     
     except:
         print("error in investment")

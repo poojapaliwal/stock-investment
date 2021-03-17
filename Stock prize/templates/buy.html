@@ -2,7 +2,9 @@
 <html>
    <body>
       <h1>Investment:</h1>
-   <form action="/stock_op" method="POST">
+      <h2>Total Investment: {{ TI }}</h2>
+      <h2>Current Value: {{ CP }}</h2>
+ 
     <table border = 1>
        <thead>
           <td>Sr. no.</td>
@@ -12,6 +14,7 @@
           <td>Quantity</td>
           <td>Buying Price</td>
           <td>Current Price</td>
+          <td>Sell</td>
        </thead>
        
        {% for row in msg %}
@@ -23,9 +26,21 @@
              <td>{{row[4]}}</td>
              <td>{{row[5]}}</td>
              <td>{{row[6]}}</td>
+             <td>
+               <form action="{{url_for('sell', id = row.serialnumber )}}" method="POST">
+                 <div>
+                   <div>
+                     <input type="number" name="quantity" placeholder="Quantity" min="1" max="{{row.quantity}}">
+                   </div>
+                 </div>
+                 <div>
+                   <button type="submit" name="sell">Sell</button>
+                 </div>
+               </form>
+             </td>
           </tr>
        {% endfor %}
     </table>
- </form>
+
    </body>
 </html>
