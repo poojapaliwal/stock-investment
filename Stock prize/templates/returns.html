@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+   <body>
+      <h1>{{message}}:{{profit}}</h1>
+ 
+    <table border = 1>
+       <thead>
+          <td>Sr. no.</td>
+          <td>Buying date</td>
+          <td>Selling date</td>
+          <td>Symbol</td>
+          <td>Name</td>
+          <td>Quantity</td>
+          <td>Buying Price</td>
+          <td>Sell Price</td>
+          <td>% Change</td>
+       </thead>
+       
+       {% for row in msg %}
+          <tr>
+             <td>{{row[0]}}</td>
+             <td>{{row[1]}}</td>
+             <td>{{row[2]}}</td>
+             <td>{{row[3]}}</td>
+             <td>{{row[4]}}</td>
+             <td>{{row[5]}}</td>
+             <td>{{row[6]}}</td>
+             <td>{{row[7]}}</td>
+             <td>{{row[8]}}</td>
+          </tr>
+       {% endfor %}
+    </table>
+
+   </body>
+</html>

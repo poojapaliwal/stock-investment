@@ -21,21 +21,60 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas_datareader.data as web
 
-@app.route('/sell/<id>',methods=['POST'])
-def sell(id):
+@app.route('/sell/<id>/<price>',methods=['POST'])
+def sell(id,price):
     if 'sell' in request.form:
+        conn = sql.connect("investments.db")
+        cur = conn.cursor()
+        info=cur.execute("SELECT * FROM investments WHERE serialnumber = :id", {"id": id}).fetchall()[0]
         quantt=request.form['quantity']
-        srno=id
-        print(srno)
-        return quantt
+        data=int(info[4])-int(quantt)
+        lst=[data,id]
+        print(lst)
+        if int(quantt) < int(info[4]):
+            cur.execute("""UPDATE investments SET quantity= ? WHERE serialnumber= ?""",lst)
+        elif int(quantt) == int(info[4]):
+            cur.execute("DELETE FROM investments WHERE serialnumber = :id", {"id": id})
+        conn.commit()
+        conn.close()
+        connection=sql.connect("returns.db")
+        db=connection.cursor()
+        today=date.today()
+        date1=today.strftime("%d-%m-%Y")
+        change=(float(price)-float(info[5]))/float(price)
+        # db.execute("DELETE FROM returns")
+        # db.execute("CREATE TABLE returns(serialnumber INTEGER PRIMARY KEY,buy_date DATE,sell_date, symbol TEXT,name TEXT,quantity int, bought_price decimal(20,2),sell_price decimal(20,2),change FLOAT)")
+        db.execute("INSERT INTO returns(serialnumber ,buy_date,sell_date, symbol,name,quantity, bought_price,sell_price,change ) VALUES (NULL,?,?,?,?,?,?,?,?)",(info[1],date1,info[2],info[3],quantt,round(info[5],2),price,round(change*100,2)))
+        connection.commit()
+        connection.close()
+        return id
         
     else:
         return "nameerror!"
 
-@app.route('/stock_op', methods = ['POST','GET'])
-def details():
-    if 'details' in request.form:
-        data = request.form['sym']
+@app.route('/returns', methods = ['POST','GET'])
+def returns():
+    try:
+        conn = sql.connect("returns.db")
+        conn.row_factory = sql.Row
+        cur = conn.cursor()
+        cur.execute("select * from returns")
+        msg = cur.fetchall()
+        lst=cur.execute("SELECT bought_price,sell_price,quantity FROM returns").fetchall()
+        profit=sum(list((b-a)*c for a,b,c in lst)) 
+        if profit>=0:
+            message="Net Profit"
+        else:
+            message="Net Loss"
+        return render_template("returns.html",msg = msg,profit=round(profit),message=message)
+    
+    except:
+        return "error in returns"
+
+
+@app.route('/<sym>', methods = ['POST','GET'])
+def details(sym):
+        data = sym
         end   = datetime.datetime.today()
         start = datetime.datetime(end.year-2, 1, 1)
         prize=si.get_live_price(data)
@@ -48,29 +87,28 @@ def details():
         pngImageB64String = "data:image/png;base64,"
         pngImageB64String += base64.b64encode(pngImage.getvalue()).decode('utf8')
         return render_template("result.html", image=pngImageB64String,msg=prize, symbol=data)
-        
-    elif 'buy' in request.form:
+
+@app.route('/buy/<symbol>', methods = ['POST'])        
+def buy(symbol):
+    if 'buy' in request.form:
         try:
-            def get_symbol(symbol):
-                url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query={}&region=1&lang=en".format(symbol)
-                import requests
-                result = requests.get(url).json()
-                for x in result['ResultSet']['Result']:
-                    if x['symbol'] == symbol:
-                        return x['name']
-            
+            def buysym(symbol):
+                    url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query={}&region=1&lang=en".format(symbol)
+                    import requests
+                    result = requests.get(url).json()
+                    for x in result['ResultSet']['Result']:
+                        if x['symbol'] == symbol:
+                            return x['name']            
             connection = sql.connect("investments.db")
             cursor = connection.cursor()
             today=date.today()
             date1=today.strftime("%d-%m-%Y")
-            symbol=request.form['sym']
-            company = get_symbol(symbol)
+            company = buysym(symbol)
             quantity=request.form['quantity']
             bought_prize=si.get_live_price(symbol)
             current_prize=si.get_live_price(symbol)
             change=((current_prize-bought_prize)/current_prize)*100
-            
-            
+
             cursor.execute("INSERT INTO investments(date, symbol,name,quantity, bought_prize,current_prize ) VALUES (?,?,?,?,?,?)",(date1,symbol,company,quantity,bought_prize,current_prize))
             # cursor.execute("INSERT INTO invest(serialnumber ,date, symbol,name,quantity, bought_prize ) VALUES ('1',?,?,?,?,?)",(date1,symbol,company,quantity,bought_prize))
             # cursor.execute("UPDATE stock SET species= 'ACC.NS' WHERE id = '6'")
@@ -83,10 +121,11 @@ def details():
             msg = "error in insert operation"
 
         finally:
-            return render_template("result.html",msg = msg)
+            return "done!"
             connection.close()
         # return render_template("buy.html",msg=msg,date=date1,symbol=symbol,company=company,quantity=pay,bought_prize=bought_prize)
-
+    else:
+        return "nameerror!"
 
 @app.route('/investments')
 def invest():

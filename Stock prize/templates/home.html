@@ -1,36 +1,38 @@
 <!doctype html>
 <html>
    <body>
-      <form action="/stock_op" method="POST">
          <table border = 1>
             <thead>
                <td>Id</td>
                <td>Name</td>
                <td>symbols</td>
+               <td>Buy</td>
             </thead>
             
             {% for row in rows %}
                <tr>
                   <td>{{row[0]}}</td>
                   <td>{{row[1]}}</td>
-                  <td><input type="radio" name="sym" id="sym" value="{{row[2]}}">{{row[2]}}</td>
+                  <td><a href="/{{row[2]}}">{{row[2]}}</a></td>
+                  <td>
+                     <form action="{{url_for('buy', symbol = row.species )}}" method="POST">
+                        <div>
+                          <div>
+                            <input type="number" name="quantity" placeholder="Quantity" min="1">
+                          </div>
+                        </div>
+                        <div>
+                          <button type="submit" name="buy">Buy</button>
+                        </div>
+                      </form>
+                   </td>
                </tr>
             {% endfor %}
-         </table>
-         <input type="submit" value="CHECK-DETAILS" name="details">
-         <input type="integer" name="quantity">
-         <input type="submit" value="BUY" name="buy">
-      </form>
-      
-      
+         </table>   
+              
       <a href = "/">Go back to home page</a>
       <a href = "/investments">Go back to investment page</a>
+      <a href = "/returns">Go back to returns page</a>
       
    </body>
-   <script>
-      function fun(){
-         alert("clicked");
-      }
-
-   </script>
 </html>

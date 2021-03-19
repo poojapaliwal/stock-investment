@@ -27,7 +27,7 @@
              <td>{{row[5]}}</td>
              <td>{{row[6]}}</td>
              <td>
-               <form action="{{url_for('sell', id = row.serialnumber )}}" method="POST">
+               <form action="{{url_for('sell', id = row.serialnumber, price=row.current_prize )}}" method="POST">
                  <div>
                    <div>
                      <input type="number" name="quantity" placeholder="Quantity" min="1" max="{{row.quantity}}">
