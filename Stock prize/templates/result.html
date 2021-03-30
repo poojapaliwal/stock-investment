@@ -1,16 +1,25 @@
 <!doctype html>
 <html>
+   <head>
+      <!-- Load plotly.js into the DOM -->
+      <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+   </head>  
    <style>
       img{
          height: 40%;
          width: 55%;
+      }
+      #myDiv{
+         height: 60%;
+         width: 60%;
       }
    </style>
    <body>
    <form action="/buy" method="POST">
       Prize:  {{ msg }}
       <div id="symbol">Symbol: {{ symbol }}</div> 
-      
+      <div id="myDiv">
+      </div>
       <img src="{{ image }}" alt="User Image">
    </form>
       <h2><a href = "/data">go back to stocks page</a></h2>

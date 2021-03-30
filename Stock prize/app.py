@@ -21,6 +21,68 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas_datareader.data as web
 
+
+@app.route('/user',methods=['GET','POST'])
+def user():
+    return render_template("user.html")
+
+
+@app.route('/loginn',methods=['POST'])
+def loginn():
+    try:
+        if 'loginn' in request.form:
+            return render_template("login.html")
+
+    except:
+        return "try didn't work"
+
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        if 'register' in request.form:
+            return render_template("register.html")
+    except:
+        return "try didn't work"
+
+@app.route('/signup',methods=['POST'])
+def signup():
+    username=request.form['username']
+    password=request.form['password']
+    repassword=request.form['confirm-password']
+    if password==repassword:
+        connection = sql.connect("users.db")
+        cursor = connection.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT,password TEXT)")
+        cursor.execute("SELECT username FROM users WHERE username=?", (username,))
+        exists = cursor.fetchall()
+        if not exists:
+            cursor.execute("INSERT INTO users(id ,username,password ) VALUES (NULL,?,?)",(username,password))
+            connection.commit()
+            connection.close()
+            return "done!"
+        
+        else:
+            return "username already exists!"
+        
+    else:
+        return "enter correct password!"
+
+@app.route('/signin',methods=['POST'])
+def signin():
+    username=request.form['username']
+    password=request.form['password']
+    connection = sql.connect("users.db")
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM users")
+    info=cursor.fetchall()
+    connection.commit()
+    connection.close()
+    if username==((info[0])[1]) and password==((info[0])[2]):
+        return "logged in!!"
+    else:
+        return "wrong username or password"
+
+
 @app.route('/sell/<id>/<price>',methods=['POST'])
 def sell(id,price):
     if 'sell' in request.form:
