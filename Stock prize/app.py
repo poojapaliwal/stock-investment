@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request
+from flask import Flask,g, flash, redirect, render_template, request, session, abort, url_for
 import sqlite3 as sql
 from yahoo_fin import stock_info as si
 import bs4 as bs
+import os
 app = Flask(__name__)
+app.secret_key = 'somesecretkeythatonlyishouldknow'
+
 # app.debug = True
 connection = sql.connect("investments.db")
 cursor = connection.cursor()
@@ -21,66 +24,71 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas_datareader.data as web
 
+class User:
+    def __init__(self, id, username, password):
+        self.id = id
+        self.username = username
+        self.password = password
 
-@app.route('/user',methods=['GET','POST'])
-def user():
-    return render_template("user.html")
+    def __repr__(self):
+        return f'<User: {self.username}>'
 
+users = []
+users.append(User(id=1, username='Anthony', password='password'))
 
-@app.route('/loginn',methods=['POST'])
-def loginn():
-    try:
-        if 'loginn' in request.form:
-            return render_template("login.html")
+@app.before_request
+def before_request():
+    g.user = None
 
-    except:
-        return "try didn't work"
-
-@app.route('/register', methods=['POST'])
-def register():
-    try:
-        if 'register' in request.form:
-            return render_template("register.html")
-    except:
-        return "try didn't work"
-
-@app.route('/signup',methods=['POST'])
-def signup():
-    username=request.form['username']
-    password=request.form['password']
-    repassword=request.form['confirm-password']
-    if password==repassword:
-        connection = sql.connect("users.db")
-        cursor = connection.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT,password TEXT)")
-        cursor.execute("SELECT username FROM users WHERE username=?", (username,))
-        exists = cursor.fetchall()
-        if not exists:
-            cursor.execute("INSERT INTO users(id ,username,password ) VALUES (NULL,?,?)",(username,password))
-            connection.commit()
-            connection.close()
-            return "done!"
+    if 'user_id' in session:
+        user = [x for x in users if x.id == session['user_id']]
+        print(user[0])
+        g.user = user[0]
         
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # session.pop('user_id', None)
+        session['logged_in']=True
+        username = request.form['username']
+        password = request.form['password']
+        
+        user = [x for x in users if x.username == username]
+        if user == []:
+            return "invalid username."
         else:
-            return "username already exists!"
-        
-    else:
-        return "enter correct password!"
+            user=user[0] 
+            if user and user.password == password:
+                session['user_id'] = user.id
+                return redirect(url_for('data'))
 
-@app.route('/signin',methods=['POST'])
-def signin():
-    username=request.form['username']
-    password=request.form['password']
-    connection = sql.connect("users.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM users")
-    info=cursor.fetchall()
-    connection.commit()
-    connection.close()
-    if username==((info[0])[1]) and password==((info[0])[2]):
-        return "logged in!!"
-    else:
-        return "wrong username or password"
+        return redirect(url_for('login'))
+
+    return render_template('login.html')
+
+@app.route('/profile')
+def profile():
+    if not g.user:
+        return redirect(url_for('login'))
+
+    return render_template('profile.html', user=g.user.username)
+
+
+@app.route('/logout', methods= ['GET', 'POST'])
+def logout():
+    session.pop('user_id', None)
+    session['logged_in']=False
+    return redirect(url_for('login'))
+
+
+
+
+
+
+
+
+
 
 
 @app.route('/sell/<id>/<price>',methods=['POST'])
@@ -255,12 +263,17 @@ def example():
 
 @app.route('/data')
 def data():
-   conn = sql.connect("data.db")
-   conn.row_factory = sql.Row
-   cur = conn.cursor()
-   cur.execute("select * from stock")
-   rows = cur.fetchall()
-   return render_template("home.html",rows = rows)
+    conn = sql.connect("data.db")
+    conn.row_factory = sql.Row
+    cur = conn.cursor()
+    cur.execute("select * from stock")
+    rows = cur.fetchall()
+    if session['logged_in'] == True:
+        return render_template("home.html",rows = rows)
+    else:
+        return "loginfirst"
+    return "NULL"
 
 if __name__ == '__main__':
-   app.run(debug = True)
+    app.secret_key = os.urandom(12)
+    app.run(debug = True)
